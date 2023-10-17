@@ -1,6 +1,6 @@
 import itertools
 
-MAX_DEPTH = 100
+MAX_DEPTH = 1
 
 def synthesize(primitives, production_rules, examples):
     expressions = starting_expressions(primitives, examples)
@@ -8,7 +8,6 @@ def synthesize(primitives, production_rules, examples):
 
     for i in range(MAX_DEPTH):
        new_expressions = generate_expressions(expressions, production_rules)
-       print(new_expressions)
        found, pruned, solution = prune(target, expressions, new_expressions, examples)
        if found:
             return solution
@@ -92,24 +91,54 @@ examples = [
 
 # Merge two strings
 def concat(x: str, y: str) -> str:
+  # type check
+  if not isinstance(x, str) or not isinstance(y, str):
+    raise Exception("x and y must be strings")
   return f"{x}{y}"
 
 # Get the left-most n characters of a string
 def left(x: str, n: int) -> str:
+  # type check
+  if not isinstance(x, str) or not isinstance(m, int):
+    raise Exception("x must be a string and n must be an integer")
   return f"{x[:n]}"
 
 # Get the right-most n characters of a string
 def right(x: str, n:int) -> str:
+  # type check
+  if not isinstance(x, str) or not isinstance(m, int):
+    raise Exception("x must be a string and n must be an integer")
   return f"{x[-n:]}"
 
 def space() -> str:
   return " "
 
+def add(n: int, m: int) -> int:
+  # type check
+  if not isinstance(n, int) or not isinstance(m, int):
+    raise Exception("n and m must be integers")
+  return n + m
+
+def arg_x():
+  return "{x}"
+
+def arg_y():
+  return "{y}"
+
+def one():
+  return "1"
+
+def two():
+  return "2"
+
+def space():
+  return " "
+
 # Define the primitives and production rules
-CONSTANTS = {"space()", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
-ARGS = {'{x}', '{y}'}
-primitives = ARGS
-production_rules = {concat}
+CONSTANTS = {"space()", "one()", "two()"}
+ARGS = {"arg_x()", "arg_y()"}
+primitives = ARGS.union(CONSTANTS)
+production_rules = {concat, left, right, add}
 
 # Define the examples
 examples = [
