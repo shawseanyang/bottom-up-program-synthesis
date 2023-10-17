@@ -8,7 +8,6 @@ def synthesize(primitives, production_rules, examples):
 
     for i in range(MAX_DEPTH):
        new_expressions = generate_expressions(expressions, production_rules)
-       print(new_expressions)
        found, pruned, solution = prune(target, expressions, new_expressions, examples)
        if found:
             return solution
@@ -81,40 +80,6 @@ production_rules = {add, subtract, multiply, divide}
 examples = [
     ({'x': 1, 'y': 2, 'z': 3}, 10),
     ({'x': 2, 'y': 3, 'z': 5}, 42),
-]
-
-# Run the algorithm
-#print(f"\n\nResult: {synthesize(primitives, production_rules, examples)}")
-
-# STRING MANIPULATION LANGUAGE
-
-# Define the rules
-
-# Merge two strings
-def concat(x: str, y: str) -> str:
-  return f"{x}{y}"
-
-# Get the left-most n characters of a string
-def left(x: str, n: int) -> str:
-  return f"{x[:n]}"
-
-# Get the right-most n characters of a string
-def right(x: str, n:int) -> str:
-  return f"{x[-n:]}"
-
-def space() -> str:
-  return " "
-
-# Define the primitives and production rules
-CONSTANTS = {"space()", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
-ARGS = {'{x}', '{y}'}
-primitives = ARGS
-production_rules = {concat}
-
-# Define the examples
-examples = [
-   ({'x': "hello", 'y': "world"}, "helloworld"),
-   ({'x': "world", 'y': "domination"}, "worlddomination"),
 ]
 
 # Run the algorithm
