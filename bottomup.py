@@ -2,20 +2,25 @@ import itertools
 from abc import ABC, abstractmethod
 from enum import Enum
 
+# On each round, we generate all possible expressions using the production rules and the expressions in the bank.
 MAX_ROUNDS = 5
+# The number of arguments that the solution must take.
 NUM_ARGS = 2
-
+# An exception to indicate that a program is not valid, for example, if it divides by zero. These programs get thrown away.
 DeadEndProgramException = Exception
 
+# Types of expressions
 class Type(Enum):
     Number = 0
     String = 1
 
+# An Example maps a set of arguments and their values to the value that the solution should return.
 type Example = tuple[dict[str, Expression], Expression]
 
 # An output is a tuple the size of NUM_ARGS, where each value represents the value of an expression on each one of the examples.
 type Outputs = tuple
 
+# An expression is a string representation of a program, a list of values that the program returns on each example, and its return type.
 class Expression:
     def __init__(self, string: str, values: Outputs, myType: Type):
         if len(values) != NUM_ARGS:
@@ -33,30 +38,37 @@ class Expression:
     def __eq__(self, other):
         return self.values == other.values
 
+# An argument is an expression whose values are readily derived from the examples.
 class Argument(Expression):
     def __init__(self, name, myType, examples):
         super().__init__(name, [input[name] for input, _ in examples], myType)
 
+# An argument whose values are numbers
 class NumArgument(Argument):
     def __init__(self, name, examples):
         super().__init__(name, Type.Number, examples)
 
+# An argument whose values are strings
 class StringArgument(Argument):
     def __init__(self, name, examples):
         super().__init__(name, Type.String, examples)
 
+# A constant is an expression whose value is equal to its string representation and whose value is constant across all inputs.
 class Constant(Expression):
     def __init__(self, value, myType):
         super().__init__(value, [value for _ in range(NUM_ARGS)], myType)
 
+# A constant whose value is a number
 class NumConstant(Constant):
     def __init__(self, value):
         super().__init__(value, Type.Number)
 
+# A constant whose value is a string
 class StringConstant(Constant):
     def __init__(self, value):
         super().__init__(value, Type.String)
 
+# An operator is a function that takes a list of arguments and returns a value.
 class Operator(ABC):
     @abstractmethod
     # String representation of the operation on args
@@ -78,6 +90,7 @@ class Operator(ABC):
     def return_type(self) -> Type:
         pass
 
+# A binary number operator is an operator that takes two numbers as arguments and returns a number.
 class BinaryNumberOperator(Operator):
     @abstractmethod
     def string(self, args):
@@ -90,6 +103,7 @@ class BinaryNumberOperator(Operator):
     def return_type(self):
         return Type.Number
 
+# Arithmetic operators
 class Add(BinaryNumberOperator):
     def string(self, args):
         return f"add({args[0]}, {args[1]})"
@@ -117,6 +131,9 @@ class Divide(BinaryNumberOperator):
         except ZeroDivisionError:
             raise DeadEndProgramException()
 
+# String operators
+
+# Concat(a,b) -> ab
 class Concat(Operator):
     def string(self, args):
         return f"concat({args[0]}, {args[1]})"
@@ -127,6 +144,7 @@ class Concat(Operator):
     def return_type(self):
         return Type.String
     
+# Left(a,i) -> a[:i]
 class Left(Operator):
     def string(self, args):
         return f"left({args[0]}, {args[1]})"
@@ -137,6 +155,7 @@ class Left(Operator):
     def return_type(self):
         return Type.String
 
+# Right(a,i) -> a[-i:]
 class Right(Operator):
     def string(self, args):
         return f"right({args[0]}, {args[1]})"
@@ -147,17 +166,21 @@ class Right(Operator):
     def return_type(self):
         return Type.String
     
+# String manipulation constants
 SPACE = StringConstant(" ")
 ONE = NumConstant(1)
 TWO = NumConstant(2)
 
+# The program bank is a set of expressions. It automatically prunes equivalent expressions because expressions are hashed by their values.
 type ProgramBank = set[Expression]
 
+# Synthesize a program bottom-up, starting from the primitives and applying the production rules until it finds a solution that satisfies the examples.
 def synthesize(
         primitives: ProgramBank,
         production_rules: list[Operator],
         examples: list[Example]) -> str:
     bank: ProgramBank = primitives
+    # We are looking for a program whose value on each example is the same as the value of the solution on each example.
     target: Outputs = tuple(output.values[0] for _, output in examples)
 
     for i in range(MAX_ROUNDS):
@@ -166,20 +189,24 @@ def synthesize(
           parity = len(rule.args())
           # 2D list where each row represents the candidates for a given argument
           args: list[list[Expression]] = []
+          # For each argument, get candidates for that argument from the bank that match the type of the argument
           for arg_index in range(parity):
               arg_type = rule.args()[arg_index]
               candidates_for_this_index = [e for e in bank if e.type == arg_type]
               args.append(candidates_for_this_index)
-          # Generate all possible combinations of arguments using a cartesian product of the candidates
+          # Generate all possible combinations of arguments using a cartesian product of the candidate arguments
           for args_tuple in itertools.product(*args):
-              # Create a new expression
               try:
-                # determine the value of the new expression on each example
+                # Determine the value of the new expression on each example
                 values = []
+                # For each example
                 for i in range(len(examples)):
+                    # Get the values of the arguments on this example
                     arg_values_on_example = [arg.values[i] for arg in args_tuple]
+                    # Evaluate the expression on this example
                     val = rule.evaluate(arg_values_on_example)
                     values.append(val)
+                # Create the new expression
                 new_expr = Expression(
                     rule.string([arg.string for arg in args_tuple]),
                     tuple(values),
@@ -190,6 +217,7 @@ def synthesize(
                     return new_expr.string
                 # Add the program to the bank, which automatically prunes equivalent programs
                 bank.add(new_expr)
+              # If the program is not valid, throw it away
               except DeadEndProgramException:
                 pass
 
