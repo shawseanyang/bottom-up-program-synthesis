@@ -245,27 +245,6 @@ examples: list[Example] = [
 arg_x = StringArgument('x', examples)
 arg_y = StringArgument('y', examples)
 
-def add(n: int, m: int) -> int:
-  # type check
-  if not isinstance(n, int) or not isinstance(m, int):
-    raise Exception("n and m must be integers")
-  return n + m
-
-def arg_x():
-  return "{x}"
-
-def arg_y():
-  return "{y}"
-
-def one():
-  return "1"
-
-def two():
-  return "2"
-
-def space():
-  return " "
-
 # Define the primitives and production rules
 primitives: ProgramBank = set([arg_x, arg_y, SPACE, ONE, TWO])
 production_rules: list[Operator] = {Concat(), Left(), Right()}
